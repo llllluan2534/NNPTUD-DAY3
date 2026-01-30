@@ -4,44 +4,64 @@
     {
       "id": "1",
       "title": "a title",
-      "views": 100
+      "views": 100,
+      "isDeleted": true
     },
     {
       "id": "2",
-      "title": "another title",
-      "views": 200
+      "title": "a title",
+      "views": 100,
+      "isDeleted": true
     },
     {
       "id": "3",
       "title": "âhha",
-      "views": 200
+      "views": 200,
+      "isDeleted": true
     },
     {
       "id": "4",
       "title": "haha",
-      "views": "400"
+      "views": "400",
+      "isDeleted": true
     },
     {
       "title": "heheheehhe",
       "views": "2000",
-      "id": "5"
+      "id": "5",
+      "isDeleted": true
     },
     {
       "title": "heheheehehehe",
       "views": "800",
-      "id": "6"
+      "id": "6",
+      "isDeleted": true
+    },
+    {
+      "id": "7",
+      "title": "alo",
+      "views": "34232",
+      "isDeleted": true
     }
   ],
   "comments": [
     {
       "id": "1",
       "text": "a comment about post 1",
-      "postId": "1"
+      "postId": "1",
+      "isDeleted": true
     },
     {
       "id": "2",
       "text": "another comment about post 1",
-      "postId": "1"
+      "postId": "1",
+      "isDeleted": true
+    },
+    {
+      "id": "3",
+      "text": "hello post 2",
+      "postId": "6",
+      "isDeleted": false
     }
   ],
   "profile": {

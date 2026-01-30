@@ -1,78 +1,227 @@
-LoadData();
-async function LoadData() {
-    //async await 
-    //HTTP Request GET, GET1, PUT, POST, DELETE
-    try {
-        let res = await fetch('http://localhost:3000/posts');
-        let posts = await res.json();
-        let body = document.getElementById('post-body')
-        body.innerHTML = "";
-        for (const post of posts) {
-            body.innerHTML += convertDataToHTML(post);
-        }
-    } catch (error) {
-        console.log(error);
-    }
+let allProducts = [];
+let filteredProducts = [];
+let currentPage = 1;
+let perPage = 10;
+let sortField = null;
+let sortOrder = "asc";
+let currentEditId = null;
 
+async function getAllProducts() {
+  try {
+    const response = await fetch("https://api.escuelajs.co/api/v1/products");
+    allProducts = await response.json();
+    filteredProducts = [...allProducts];
+    renderProducts();
+    updatePagination();
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    document.getElementById("product-body").innerHTML = `
+      <tr>
+        <td colspan="8" style="text-align: center; color: #e11d48;">
+          Lỗi khi tải sản phẩm. Vui lòng tải lại trang.
+        </td>
+      </tr>
+    `;
+  }
 }
-function convertDataToHTML(post) {
-    return `<tr>
-        <td>${post.id}<td>
-        <td>${post.title}<td>
-        <td>${post.views}<td>
-        <td><input type='submit' value='delete' onclick='Delete(${post.id})'/><td>
-    </tr>`
+
+function renderProducts() {
+  const start = (currentPage - 1) * perPage;
+  const end = start + perPage;
+  const productsToShow = filteredProducts.slice(start, end);
+
+  const container = document.getElementById("product-body");
+  const noResults = document.getElementById("noResults");
+
+  if (productsToShow.length === 0) {
+    container.innerHTML = "";
+    noResults.style.display = "block";
+    return;
+  }
+
+  noResults.style.display = "none";
+  container.innerHTML = "";
+
+  productsToShow.forEach((product, idx) => {
+    const row = document.createElement("tr");
+    row.style.animationDelay = `${idx * 50}ms`;
+    const createdAt = new Date(product.creationAt).toLocaleDateString("vi-VN");
+    const updatedAt = new Date(product.updatedAt).toLocaleDateString("vi-VN");
+    const imageUrl =
+      product.images && product.images[0]
+        ? product.images[0]
+        : "https://placehold.co/600x400";
+
+    row.innerHTML = `
+      <td>${product.id}</td>
+      <td>
+        <img 
+          src="${imageUrl}" 
+          alt="${product.title}" 
+          class="product-image" 
+          onerror="this.src='https://placehold.co/600x400'"
+        >
+      </td>
+      <td>
+        <div class="product-title">${product.title}</div>
+      </td>
+      <td>
+        <div class="product-price">$${product.price}</div>
+      </td>
+      <td>
+        <div class="product-description">${product.description || "N/A"}</div>
+      </td>
+      <td>${createdAt}</td>
+      <td>${updatedAt}</td>
+      <td>
+        <div class="actions-buttons">
+          <button class="btn-sort" onclick="editProduct(${product.id})">Sửa</button>
+          <button class="btn-danger" onclick="deleteProduct(${product.id})">Xóa</button>
+        </div>
+      </td>
+    `;
+    container.appendChild(row);
+  });
 }
-async function saveData() {
-    let id = document.getElementById("id_txt").value;
-    let title = document.getElementById("title_txt").value;
-    let view = document.getElementById('views_txt').value;
-    let resGET = await fetch('http://localhost:3000/posts/' + id)
-    if (resGET.ok) {
-        let resPUT = await fetch('http://localhost:3000/posts/' + id, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(
-                {
-                    title: title,
-                    views: view
-                })
-        });
-        if (resPUT.ok) {
-            console.log("thanh cong");
-        }
-        return false;
+
+function filterProducts() {
+  const searchTerm = document.getElementById("search_txt").value.toLowerCase();
+  filteredProducts = allProducts.filter((product) =>
+    product.title.toLowerCase().includes(searchTerm),
+  );
+  currentPage = 1;
+  renderProducts();
+  updatePagination();
+}
+
+function sortBy(field, order) {
+  sortField = field;
+  sortOrder = order;
+
+  // Update button states
+  document.querySelectorAll(".btn-sort").forEach((btn) => {
+    btn.classList.remove("active");
+  });
+  event.target.classList.add("active");
+
+  filteredProducts.sort((a, b) => {
+    let aVal = a[field];
+    let bVal = b[field];
+    if (typeof aVal === "string") {
+      aVal = aVal.toLowerCase();
+      bVal = bVal.toLowerCase();
+    }
+    if (sortOrder === "asc") {
+      return aVal > bVal ? 1 : -1;
     } else {
-        //POST
-        let resPOST = await fetch('http://localhost:3000/posts', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(
-                {
-                    id: id,
-                    title: title,
-                    views: view
-                })
-        })
-        if (resPOST.ok) {
-            console.log("thanh cong");
-        }
-        return false;
+      return aVal < bVal ? 1 : -1;
     }
+  });
 
-
-
+  currentPage = 1;
+  renderProducts();
+  updatePagination();
 }
-async function Delete(id) {
-    let res = await fetch('http://localhost:3000/posts/' + id, {
-        method: "delete"
-    });
-    if (res.ok) {
-        console.log("xoa thanh cong");
-        LoadData();
-    }
+
+function changePage(direction) {
+  const totalPages = Math.ceil(filteredProducts.length / perPage);
+  currentPage += direction;
+  if (currentPage < 1) currentPage = 1;
+  if (currentPage > totalPages) currentPage = totalPages;
+  renderProducts();
+  updatePagination();
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
+
+function changePerPage() {
+  perPage = parseInt(document.getElementById("per-page").value);
+  currentPage = 1;
+  renderProducts();
+  updatePagination();
+}
+
+function updatePagination() {
+  const totalPages = Math.ceil(filteredProducts.length / perPage);
+  const pageInfo = document.getElementById("page-info");
+  pageInfo.textContent = `${currentPage} of ${totalPages}`;
+
+  const prevBtn = document.getElementById("prev-btn");
+  const nextBtn = document.getElementById("next-btn");
+
+  prevBtn.disabled = currentPage === 1;
+  nextBtn.disabled = currentPage === totalPages;
+}
+
+function editProduct(id) {
+  const product = allProducts.find((p) => p.id === id);
+  if (!product) return;
+
+  currentEditId = id;
+  document.getElementById("edit-title").value = product.title;
+  document.getElementById("edit-price").value = product.price;
+  document.getElementById("edit-description").value = product.description || "";
+  document.getElementById("edit-images").value =
+    product.images && product.images[0] ? product.images[0] : "";
+
+  document.getElementById("editModal").style.display = "block";
+}
+
+function closeModal() {
+  document.getElementById("editModal").style.display = "none";
+  currentEditId = null;
+}
+
+function saveEdit() {
+  const title = document.getElementById("edit-title").value.trim();
+  const price = parseFloat(document.getElementById("edit-price").value);
+  const description = document.getElementById("edit-description").value.trim();
+  const images = document.getElementById("edit-images").value.trim();
+
+  if (!title || isNaN(price)) {
+    alert("Vui lòng nhập đầy đủ thông tin hợp lệ.");
+    return;
+  }
+
+  const productIndex = allProducts.findIndex((p) => p.id === currentEditId);
+  if (productIndex === -1) return;
+
+  allProducts[productIndex].title = title;
+  allProducts[productIndex].price = price;
+  allProducts[productIndex].description = description;
+  allProducts[productIndex].images = images ? [images] : [];
+  allProducts[productIndex].updatedAt = new Date().toISOString();
+
+  filteredProducts = [...allProducts];
+  if (sortField) {
+    sortBy(sortField, sortOrder);
+  } else {
+    renderProducts();
+    updatePagination();
+  }
+
+  closeModal();
+}
+
+function deleteProduct(id) {
+  if (!confirm("Bạn có chắc muốn xóa sản phẩm này?")) return;
+
+  allProducts = allProducts.filter((p) => p.id !== id);
+  filteredProducts = [...allProducts];
+  if (sortField) {
+    sortBy(sortField, sortOrder);
+  } else {
+    renderProducts();
+    updatePagination();
+  }
+}
+
+// Close modal when clicking outside
+window.onclick = function (event) {
+  const modal = document.getElementById("editModal");
+  if (event.target === modal) {
+    closeModal();
+  }
+};
+
+// Initialize
+getAllProducts();

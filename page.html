@@ -1,40 +1,161 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <script defer src="main.js">
-    </script>
-</head>
-<body>
-    <div>
-        <table id="post-table">
-            <thead>
-                <th>
-                    <td>
-                        ID
-                    </td>
-                    <td>
-                        title
-                    </td>
-                    <td>
-                        views
-                    </td>
-                </th>
-            </thead>
-            <tbody id="post-body">
-                
-            </tbody>
-        </table>
-    </div>
-    <div>
-        <div>
-            <input type="text" id="id_txt">
-            <input type="text" id="title_txt">
-            <input type="text" id="views_txt">
-            <input type="submit" value="Save" onclick="saveData()">
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Danh Sách Sản Phẩm</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div class="header">
+        <h1 class="header-title">Danh Sách Sản Phẩm</h1>
+        <div class="header-line"></div>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="search-container">
+        <input
+          type="text"
+          id="search_txt"
+          class="search-input"
+          placeholder="Tìm kiếm sản phẩm..."
+          onkeyup="filterProducts()"
+        />
+      </div>
+
+      <!-- Controls -->
+      <div class="controls">
+        <div class="control-group">
+          <label class="control-label">Sắp xếp</label>
+          <div class="control-buttons" id="sortButtons">
+            <button class="btn-sort" onclick="sortBy('title', 'asc')">
+              A - Z
+            </button>
+            <button class="btn-sort" onclick="sortBy('title', 'desc')">
+              Z - A
+            </button>
+            <button class="btn-sort" onclick="sortBy('price', 'asc')">
+              Giá thấp đến cao
+            </button>
+            <button class="btn-sort" onclick="sortBy('price', 'desc')">
+              Giá cao đến thấp
+            </button>
+          </div>
         </div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Hình Ảnh</th>
+              <th>Tiêu Đề</th>
+              <th>Giá</th>
+              <th>Mô Tả</th>
+              <th>Ngày Tạo</th>
+              <th>Ngày Cập Nhật</th>
+              <th>Thao Tác</th>
+            </tr>
+          </thead>
+          <tbody id="product-body">
+            <tr>
+              <td colspan="8" class="loading">
+                <div class="loader"></div>
+                Đang tải sản phẩm...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- No Results -->
+      <div id="noResults" class="no-results" style="display: none">
+        <p class="no-results-text">Không tìm thấy sản phẩm</p>
+        <p class="no-results-subtext">Vui lòng thử tìm kiếm với từ khóa khác</p>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination">
+        <div class="pagination-top">
+          <div class="pagination-info">
+            Trang <strong id="page-info">1 of 1</strong>
+          </div>
+          <div class="items-per-page">
+            <span class="items-label">Hiển thị:</span>
+            <select id="per-page" onchange="changePerPage()">
+              <option value="5">5</option>
+              <option value="10" selected>10</option>
+              <option value="20">20</option>
+            </select>
+          </div>
+          <div class="pagination-buttons">
+            <button
+              class="btn-pagination"
+              id="prev-btn"
+              onclick="changePage(-1)"
+            >
+              ←
+            </button>
+            <button
+              class="btn-pagination"
+              id="next-btn"
+              onclick="changePage(1)"
+            >
+              →
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
-</body>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">Chỉnh sửa sản phẩm</h2>
+          <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="edit-title">Tiêu đề</label>
+            <input type="text" id="edit-title" required />
+          </div>
+          <div class="form-group">
+            <label for="edit-price">Giá</label>
+            <input type="number" id="edit-price" step="0.01" required />
+          </div>
+          <div class="form-group">
+            <label for="edit-description">Mô tả</label>
+            <textarea id="edit-description" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="edit-images">Hình ảnh (URL)</label>
+            <input
+              type="text"
+              id="edit-images"
+              placeholder="https://placehold.co/600x400"
+            />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-modal btn-secondary" onclick="closeModal()">
+            Hủy
+          </button>
+          <button class="btn-modal btn-primary" onclick="saveEdit()">
+            Lưu
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="./main.js"></script>
+  </body>
 </html>
